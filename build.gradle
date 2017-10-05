@@ -1,24 +1,45 @@
 plugins {
-  id "com.iadams.gradle-plugin-plugin" version "0.2"
+  id "com.gradle.plugin-publish" version "0.9.8"
 }
+
+apply plugin: 'groovy'
+apply plugin: 'jacoco'
+apply plugin: 'maven-publish'
 
 group 'com.iadams.gradle'
 version '0.1-RC2'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+publishing { 
+  repositories {
+    maven {
+      url "s3://${System.env.S3_GRADLE_DIR}"
+      credentials(AwsCredentials) {
+        accessKey "${System.env.AWS_ACCESS_KEY_ID}"
+        secretKey "${System.env.AWS_SECRET_ACCESS_KEY}"
+      }
+    }
+  }
+  publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
 
 repositories {
   mavenCentral()
 }
 
 dependencies {
-  compile 'io.fabric8:openshift-client:2.2.13'
+  compile 'io.fabric8:openshift-client:2.6.3'
+  compile localGroovy()
+  compile gradleApi()
 
+  testCompile gradleTestKit()
   testCompile 'commons-io:commons-io:2.4'
-  testCompile 'io.fabric8:kubernetes-client:2.2.13:tests'
-  testCompile 'io.fabric8:openshift-client:2.2.13:tests'
-  testCompile 'io.fabric8:openshift-server-mock:2.2.13'
+  testCompile 'io.fabric8:kubernetes-client:2.6.3:tests'
+  testCompile 'io.fabric8:openshift-client:2.6.3:tests'
+  testCompile 'io.fabric8:openshift-server-mock:2.6.3'
 
   testCompile 'org.spockframework:spock-core:1.0-groovy-2.4', {
     exclude module: 'groovy-all'
@@ -39,7 +60,7 @@ task integTestTarBall(type: Tar) {
   compression = Compression.GZIP
 }
 
-processIntegTestResources.dependsOn integTestTarBall
+//processIntegTestResources.dependsOn integTestTarBall
 
 pluginBundle {
   website = 'https://github.com/iwarapter/gradle-openshift-plugin'
@@ -53,4 +74,13 @@ pluginBundle {
       displayName = 'Gradle OpenShift Plugin'
     }
   }
+}
+
+uploadArchives {
+    repositories {
+        flatDir {
+            name 'testRepo'
+            dirs "$buildDir/repo/com/iadams/gradle-openshift-plugin/0.1-RC2/"
+        }
+    }
 }

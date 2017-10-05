@@ -2,3 +2,10 @@
 .idea/
 build/
 src/integTest/resources/docker-build/build.tar.gz
+\.classpath
+
+\.project
+
+\.settings/
+.vscode/
+bin/
